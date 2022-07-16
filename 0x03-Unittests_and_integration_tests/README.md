@@ -11,7 +11,7 @@
 
 python -m unittest path/to/test_file.py
 
-<h3><b>Resources</b>
+<h3><b>Resources</b></h3>
 Read or watch:
 
 <li>unittest — Unit testing framework
