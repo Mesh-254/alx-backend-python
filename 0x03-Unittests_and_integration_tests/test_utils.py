@@ -18,4 +18,4 @@ class TestAccessNestedMap(unittest.TestCase):
         test access_nested_map
         args:nesterdd_map, path, expected
         """
-        self.assertEqual(access_nested_map(nested_map, path), expected)
+        self.assertEqual(nested_map, path, expected)
