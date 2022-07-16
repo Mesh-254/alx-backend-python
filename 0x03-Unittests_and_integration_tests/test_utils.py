@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """test utils for nested map function"""
 
-from utils import access_nested_map, get_json
+from utils import access_nested_map, get_json, memoize
 import unittest
 from parameterized import parameterized
 from unittest.mock import patch
@@ -46,3 +46,24 @@ class TestGetJson(unittest.TestCase):
         mock_get.return_value = payload
         result = get_json(url)
         self.assertEqual(result, payload)
+
+
+class TestMemoize(unittest.TestCase):
+    """test memoize"""
+
+    def test_memoize(self):
+        """test memoize"""
+        class TestClass:
+
+            def a_method(self):
+                return 42
+
+            @memoize
+            def a_property(self):
+                return self.a_method()
+
+        with patch.object(TestClass, 'a_method') as mock:
+            test_class = TestClass()
+            test_class.a_property()
+            test_class.a_property()
+            mock.assert_called_once()
