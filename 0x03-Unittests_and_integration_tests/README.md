@@ -19,7 +19,7 @@ Read or watch:
 <li>How to mock a readonly property with mock?
 <li>parameterized
 <li>Memoization
-<h2>Learning Objectives
+<h2>Learning Objectives</h2>
 <p>At the end of this project, you are expected to be able to explain to anyone, without the help of Google:
 
 <li>The difference between unit and integration tests.
