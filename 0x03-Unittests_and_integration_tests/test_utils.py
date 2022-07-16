@@ -24,7 +24,7 @@ class TestAccessNestedMap(unittest.TestCase):
         ({}, ("a",)),
         ({"a": 1}, ("a", "b"))
     ])
-    def test_access_nested_map_exception(self, nested_map, path, output):
+    def test_access_nested_map_exception(self, nested_map, path):
         """
         test access_nested_map_exception
         """
