@@ -2,9 +2,10 @@
 """
 a class to test the github_org_client.py file
 """
+from typing import Any
 import unittest
 from client import GithubOrgClient
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 from parameterized import parameterized
 from utils import get_json
 
@@ -41,24 +42,28 @@ class TestGithubOrgClient(unittest.TestCase):
                              "https://api.github.com/orgs/google/repos")
 
     @patch('utils.get_json')
-    def test_public_repos(self, mock_get_json: callable) -> list:
+    def test_public_repos(self, mock_get_json: MagicMock) -> Any:
         """Method to test get_json
         & public_repos_url method
         """
-        mock_get_json.return_value = [
-            {
-                "name": "google",
-                "license": {
-                    "key": "mit"
+        mock_get_json.return_value = {
+            "repos_url": "https://api.github.com/orgs/google/repos",
+            "repos": [
+                {
+                    "name": "google",
+                    "license": {
+                        "key": "mit"
+                    }
+                },
+                {
+                    "name": "abc",
+                    "license": {
+                        "key": "mit"
+                    }
                 }
-            },
-            {
-                "name": "abc",
-                "license": {
-                    "key": "mit"
-                }
-            }
-        ]
+            ]
+
+        }
 
         mock_get_json.assert_called_once()
 
