@@ -5,7 +5,7 @@ a class to test the github_org_client.py file
 from typing import Any
 import unittest
 from client import GithubOrgClient
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 from parameterized import parameterized
 from utils import get_json
 
@@ -46,32 +46,29 @@ class TestGithubOrgClient(unittest.TestCase):
         """Method to test get_json
         & public_repos_url method
         """
-        mock_get_json.return_value = {
-            "repos_url": "https://api.github.com/orgs/google/repos",
-            "repos": [
-                {
-                    "name": "google",
-                    "license": {
+        mock_get_json.return_value = "repos" [
+            {
+                "name": "google",
+                "license": {
                         "key": "mit"
-                    }
-                },
-                {
-                    "name": "abc",
-                    "license": {
-                        "key": "mit"
-                    }
                 }
-            ]
-
-        }
+            },
+            {
+                "name": "abc",
+                "license": {
+                        "key": "mit"
+                }
+            }
+        ]
 
         mock_get_json.assert_called_once()
 
-        with patch('GithubOrgClient._public_repos_url') as mock_repos:
-            mock_repos.return_value = "https://api.github.com/orgs/google/repos"
+        with patch('GithubOrgClient._public_repos_url', new_callable=PropertyMock) as mock_repos:
+            mock_repos.return_value = "https://api.github.com/" '+'
+            "orgs/google/repos"
             github_org_client = GithubOrgClient("google")
             self.assertEqual(github_org_client.public_repos(),
-                             ["google"])
+                             ["google", "abc"])
             mock_repos.assert_called_once()
 
 
