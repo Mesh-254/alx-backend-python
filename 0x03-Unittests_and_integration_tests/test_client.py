@@ -42,34 +42,37 @@ class TestGithubOrgClient(unittest.TestCase):
                              "https://api.github.com/orgs/google/repos")
 
     @patch('client.get_json')
-    def test_public_repos(self, mock_get_json: MagicMock) -> Any:
-        """Method to test get_json
-        & public_repos_url method
+    def test_public_repos(self, mock_org: MagicMock) -> None:
         """
-        mock_get_json.return_value = "repos" [
-            {
-                "name": "google",
-                "license": {
+        a method to test public_repos method
+        """
+        test_payload = {
+            "repos_url": "https://api.github.com/orgs/google/repos",
+            "repos": [
+                {
+                    "name": "google",
+                    "license": {
                         "key": "mit"
-                }
-            },
-            {
-                "name": "abc",
-                "license": {
+                    }
+                },
+                {
+                    "name": "abc",
+                    "license": {
                         "key": "mit"
+                    }
                 }
-            }
-        ]
-
-        mock_get_json.assert_called_once()
-
-        with patch('GithubOrgClient._public_repos_url', new_callable=PropertyMock) as mock_repos:
-            mock_repos.return_value = "https://api.github.com/" '+'
-            "orgs/google/repos"
+            ]
+        }
+        mock_org.return_value = test_payload["repos"]
+        with patch('client.GithubOrgClient._public_repos_url',
+                   new_callable=PropertyMock
+                   ) as mock_org_repos:
+            mock_org_repos.return_value = test_payload["repos_url"]
             github_org_client = GithubOrgClient("google")
             self.assertEqual(github_org_client.public_repos(),
                              ["google", "abc"])
-            mock_repos.assert_called_once()
+            mock_org_repos.assert_called_once()
+        mock_org.assert_called_once()
 
 
 if __name__ == '__main__':
