@@ -83,7 +83,8 @@ class TestGithubOrgClient(unittest.TestCase):
         a method to test has_license method
         """
         github_org_client = GithubOrgClient("google")
-        self.assertTrue(github_org_client.has_license(repo, license_key))
+        self.assertEqual(github_org_client.has_license(
+            repo, license_key), expected_result)
 
 
 if __name__ == '__main__':
