@@ -116,7 +116,7 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
         cls.get_patcher.start()
 
     def test_public_repos(self) -> None:
-        """
+        """pyc
         Tests the public_repos method.
         """
         self.assertEqual(
