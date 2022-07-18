@@ -42,7 +42,7 @@ class TestGithubOrgClient(unittest.TestCase):
 
     @patch('utils.get_json')
     def test_public_repos(self, mock_get_json: callable) -> list:
-        """Method to test get_json 
+        """Method to test get_json
         & public_repos_url method
         """
         mock_get_json.return_value = [
@@ -59,13 +59,15 @@ class TestGithubOrgClient(unittest.TestCase):
                 }
             }
         ]
+
         mock_get_json.assert_called_once()
 
-        with patch('GithubOrgClient._public_repos_url') as mock_public_repos_url:
-            mock_public_repos_url.return_value = "https://api.github.com/orgs/google/repos"
+        with patch('GithubOrgClient._public_repos_url') as mock_repos:
+            mock_repos.return_value = "https://api.github.com/orgs/google/repos"
             github_org_client = GithubOrgClient("google")
-            self.assertEqual(github_org_client.public_repos(), ["google", "abc"])
-            mock_public_repos_url.assert_called_once()
+            self.assertEqual(github_org_client.public_repos(),
+                             ["google"])
+            mock_repos.assert_called_once()
 
 
 if __name__ == '__main__':
