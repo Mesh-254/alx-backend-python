@@ -50,7 +50,6 @@ def connect_to_prodev():
             password=os.getenv('DB_PASSWORD'),
             database=os.getenv('DB_DATABASE')
         )
-
         return connection
 
     except Error as e:
@@ -90,6 +89,9 @@ def insert_data(connection, user_data_file):
 
                     # Generate a unique UUID for user_id
                     user_id = str(uuid.uuid4())
+
+                    # Convert age to integer
+                    age = int(age)
 
                     cursor.execute(
                         "INSERT INTO user_data (user_id, name, email, age) VALUES (%s, %s, %s, %s)",
