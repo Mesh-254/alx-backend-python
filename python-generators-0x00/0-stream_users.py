@@ -29,6 +29,7 @@ def stream_users():
 
                 for x in cursor:
                     yield x
+            
 
             except Error as e:
                 print(f"Error fetching data: {e}")
