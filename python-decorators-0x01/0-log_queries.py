@@ -8,10 +8,10 @@ def log_queries(func):
     """
     def wrapper(*args, **kwargs):
         # Extract the query to log it
-        starttime = datetime.datetime.now()
+        starttime = datetime.now()
         query = args[0] if args else kwargs.get('query')
         print(f"SQL query Executing: {query}")
-        endtime = datetime.datetime.now()
+        endtime = datetime.now()
         # Call the original function with the given arguments
         return func(*args, **kwargs)
     return wrapper
