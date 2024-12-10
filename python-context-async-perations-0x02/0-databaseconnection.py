@@ -75,7 +75,7 @@ with DatabaseConnection(DB_HOST=os.getenv('DB_HOST'),
     cursor = connection.cursor()
 
     # Execute a query to fetch all rows from the 'user_data' table
-    cursor.execute("SELECT * FROM user_data")
+    cursor.execute("SELECT * FROM users")
 
     # Iterate through the results and print each row
     for row in cursor:
