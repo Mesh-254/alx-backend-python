@@ -58,17 +58,24 @@ class ExecuteQuery:
         return True  # Indicate successful execution
 
 
-# Define the SQL query to execute
-query = "SELECT * FROM users WHERE age > ?"
-
-# Define the query parameter (age threshold)
-age = 25
+# Prompt the user for a query and an age threshold
+print("Enter an SQL query with a placeholder (e.g., SELECT * FROM users WHERE age > ?):")
+query = input("Query: ").strip()
+try:
+    age = int(input("Enter the age threshold: ").strip())
+except ValueError:
+    print("Invalid input for age. Please enter a numeric value.")
+    exit(1)
 
 # Use the ExecuteQuery context manager to execute the query
 with ExecuteQuery(query, age) as connection:
     # Create a cursor object to execute SQL commands
     cursor = connection.cursor()
-    # Execute the SQL query with the age parameter
-    cursor.execute(query, (age,))
-    for row in cursor:  # Iterate through the query results
-        print(row)  # Print each row returned by the query
+    try:
+        # Execute the SQL query with the age parameter
+        cursor.execute(query, (age,))
+        for row in cursor:  # Iterate through the query results
+            print(row)  # Print each row returned by the query
+    except sqlite3.Error as e:
+        # Handle any SQLite errors that occurred during execution
+        print(f"SQLite error: {e}")
