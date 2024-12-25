@@ -1,123 +1,112 @@
-from rest_framework import serializers
-from .models import User, Conversation, Message
+from rest_framework import viewsets
+from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
+from rest_framework import status
+from .models import Conversation, Message
+from .serializers import ConversationSerializer, MessageSerializer
+from rest_framework.permissions import IsAuthenticated
+from django_filters.rest_framework import DjangoFilterBackend
+import django_filters
 
 
-
-class UserSerializer(serializers.ModelSerializer):
-    # This will calculate the full name dynamically.
-    full_name = serializers.SerializerMethodField()
-
-    class Meta:
-        model = User
-        fields = ['user_id', 'first_name', 'last_name', 'email',
-                  'phone_number', 'role', 'created_at', 'full_name']
-
-    def get_full_name(self, obj):
-        """
-        Return the full name by combining first and last names.
-        """
-        return f"{obj.first_name} {obj.last_name}"
-
-    def validate_email(self, value):
-        """
-        Custom validation for email field. Raise an error if email is from a non-permitted domain.
-        """
-        if '@example.com' in value:
-            raise serializers.ValidationError("Emails from 'example.com' are not allowed.")
-        return value
-
-    def create(self, validated_data):
-        """
-        Create and return a new `User` instance, given the validated data.
-        """
-        return User.objects.create(**validated_data)
-
-    def update(self, instance, validated_data):
-        """
-        Update and return an existing `User` instance, given the validated data.
-        """
-        instance.first_name = validated_data.get(
-            'first_name', instance.first_name)
-        instance.last_name = validated_data.get(
-            'last_name', instance.last_name)
-        instance.email = validated_data.get('email', instance.email)
-        instance.phone_number = validated_data.get(
-            'phone_number', instance.phone_number)
-        instance.role = validated_data.get('role', instance.role)
-        instance.created_at = validated_data.get(
-            'created_at', instance.created_at)
-        instance.save()
-        return instance
-
-
-class ConversationSerializer(serializers.ModelSerializer):
-    participants_id = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=User.objects.all())
+# Conversation Filter class to filter by participant
+class ConversationFilter(django_filters.FilterSet):
+    participants_id = django_filters.UUIDFilter(
+        field_name="participants__user_id", lookup_expr='exact')
 
     class Meta:
         model = Conversation
-        fields = ['conversation_id', 'participants_id', 'created_at']
-
-    def validate_participants_id(self, value):
-        """
-        Ensure that at least two participants are provided in the conversation.
-        """
-        if len(value) < 2:
-            raise serializers.ValidationError(
-                "A conversation must have at least two participants.")
-        return value
-
-    def create(self, validated_data):
-        """
-        Create and return a new `Conversation` instance, given the validated data.
-        """
-        return Conversation.objects.create(**validated_data)
-
-    def update(self, instance, validated_data):
-        """
-        Update and return an existing `Conversation` instance, given the validated data.
-        """
-        instance.participants_id = validated_data.get(
-            'participants_id', instance.participants_id)
-        instance.created_at = validated_data.get(
-            'created_at', instance.created_at)
-        instance.save()
-        return instance
+        fields = ['participants_id']
 
 
-class MessageSerializer(serializers.ModelSerializer):
-    sender_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
-    conversation = serializers.PrimaryKeyRelatedField(
-        queryset=Conversation.objects.all())
-    # Preview field changed to CharField.
-    message_preview = serializers.CharField(read_only=True)
+# ViewSet for listing conversations and creating a new conversation
+class ConversationViewSet(viewsets.ModelViewSet):
+    queryset = Conversation.objects.all()
+    serializer_class = ConversationSerializer
+    permission_classes = [IsAuthenticated]  # Restrict to authenticated users
+    filters = (DjangoFilterBackend,)
+    filterset_class = ConversationFilter  # Attach custom filter
+
+    def create(self, request, *args, **kwargs):
+        """
+        Create a new conversation.
+        """
+        # The serializer expects data for participants and created_at
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            # Save the new conversation and handle participants separately if needed
+            conversation = serializer.save()
+
+            # Add participants, if participants are included in the request, but not required
+            participants = request.data.get("participants_id", [])
+            conversation.participants.set(participants)
+            conversation.save()
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# Message Filter class to filter by sender or conversation
+class MessageFilter(django_filters.FilterSet):
+    sender_id = django_filters.UUIDFilter(
+        field_name="sender__user_id", lookup_expr='exact')
+    conversation_id = django_filters.UUIDFilter(
+        field_name="conversation__conversation_id", lookup_expr='exact')
 
     class Meta:
         model = Message
-        fields = ['message_id', 'sender_id', 'conversation',
-                  'message_body', 'sent_at', 'message_preview']
+        fields = ['sender_id', 'conversation_id']
 
-    def get_message_preview(self, obj):
-        """
-        Generate a preview of the message by truncating the message body.
-        """
-        return obj.message_body[:30]  # Returns the first 30 characters as a preview.
 
-    def validate_message_body(self, value):
-        """
-        Custom validation for message body, checking if it contains profanity.
-        """
-        if 'badword' in value.lower():
-            raise serializers.ValidationError("Message contains inappropriate language.")
-        # Ensure the message isn't empty or only spaces.
-        if len(value.strip()) == 0:
-            raise serializers.ValidationError("Message body cannot be empty.")
-        return value
+# ViewSet for listing messages and sending messages to an existing conversation
+class MessageViewSet(viewsets.ModelViewSet):
+    queryset = Message.objects.all()
+    serializer_class = MessageSerializer
+    # Only allow authenticated users to send messages.
+    permission_classes = [IsAuthenticated]
+    filters = (DjangoFilterBackend,)
+    filterset_class = MessageFilter  # Attach custom filter
 
-    def validate(self, data):
+    def perform_create(self, serializer):
         """
-        Perform additional validation before saving the message.
+        Override this method to add the 'sender' dynamically, based on the authenticated user.
         """
-        if data.get('conversation') and not Conversation.objects.filter(id=data['conversation'].id).exists():
-            raise serializers.ValidationError("The conversation does not exist.")
-        return data
+        serializer.save(
+            # Assign sender as the current logged-in user.
+            sender=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        """
+        Send a message to a specific conversation.
+        Instead of using request.data alone, we also need the conversation ID
+        to relate the message to the correct conversation.
+        """
+        conversation_id = kwargs.get('conversation_id')
+        conversation = get_object_or_404(Conversation, pk=conversation_id)
+
+        # Adding the 'conversation' relationship before saving the message
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            # Add conversation here
+            serializer.save(sender=request.user, conversation=conversation)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # Optional: Custom action to handle sending messages
+    @action(detail=True, methods=['post'], url_path='send-message')
+    def send_message(self, request, pk=None):
+        """
+        This custom action allows sending a message to a conversation.
+        It is an additional endpoint specifically for sending messages
+        to a conversation without changing the normal create behavior.
+        """
+        conversation = get_object_or_404(Conversation, pk=pk)
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            # Ensure the conversation is associated
+            serializer.save(sender=request.user, conversation=conversation)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
