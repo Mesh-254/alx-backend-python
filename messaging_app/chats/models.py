@@ -29,7 +29,7 @@ class User(models.Model):
 class Conversation(models.Model):
     conversation_id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False)
-    participants_id= models.ManyToManyField(User, related_name="conversation")
+    participants= models.ManyToManyField(User, related_name="conversations")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -41,10 +41,10 @@ class Conversation(models.Model):
 class Message(models.Model):
     message_id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False)
-    sender_id = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="message")
+    sender = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="messages")
     conversation = models.ForeignKey(
-        Conversation, on_delete=models.CASCADE, related_name="message")
+        Conversation, on_delete=models.CASCADE, related_name="messages")
     message_body = models.TextField(null=False)
     sent_at = models.DateTimeField(auto_now_add=True)
 
