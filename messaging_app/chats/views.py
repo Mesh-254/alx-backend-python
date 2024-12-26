@@ -1,82 +1,78 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, filters, status
 from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
-from rest_framework import status
-from .models import Conversation, Message
+from django_filters.rest_framework import DjangoFilterBackend
+from .models import User, Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import action
 
 
-# ViewSet for listing conversations and creating a new conversation
 class ConversationViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing Conversations.
+    """
     queryset = Conversation.objects.all()
     serializer_class = ConversationSerializer
-    permission_classes = [IsAuthenticated]  # You might want to restrict this to authenticated users.
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = ['participants', 'created_at']  # Filter conversations by participants
+    ordering_fields = ['created_at']
+    ordering = ['-created_at']
 
     def create(self, request, *args, **kwargs):
         """
         Create a new conversation.
         """
-        # The serializer expects data for participants and created_at
-        # We can validate and create participants when needed
         serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            # Save the new conversation and handle participants separately if needed
-            conversation = serializer.save()
-
-            # Add participants, if participants are included in the request, but not required
-            participants = request.data.get("participants_id", [])
-            conversation.participants.set(participants)
-            conversation.save()
-            
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-# ViewSet for listing messages and sending messages to an existing conversation
 class MessageViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing Messages.
+    """
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
-    permission_classes = [IsAuthenticated]  # Only allow authenticated users to send messages.
-
-    def perform_create(self, serializer):
-        """
-        Override this method to add the 'sender' dynamically, based on the authenticated user.
-        """
-        serializer.save(sender=self.request.user)  # Assign sender as the current logged-in user.
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    # Filter by conversation or sender
+    filterset_fields = ['conversation', 'sender']
+    ordering_fields = ['sent_at']
+    ordering = ['-sent_at']
 
     def create(self, request, *args, **kwargs):
         """
-        Send a message to a specific conversation.
-        Instead of using request.data alone, we also need the conversation ID
-        to relate the message to the correct conversation.
+        Send a message in an existing conversation.
         """
-        conversation_id = kwargs.get('conversation_id')
-        conversation = get_object_or_404(Conversation, pk=conversation_id)
-
-        # Adding the 'conversation' relationship before saving the message
         serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(sender=request.user, conversation=conversation)  # Add conversation here
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    # Optional: Custom action to handle sending messages
-    @action(detail=True, methods=['post'], url_path='send-message')
-    def send_message(self, request, pk=None):
+    def perform_create(self, serializer):
         """
-        This custom action allows sending a message to a conversation.
-        It is an additional endpoint specifically for sending messages
-        to a conversation without changing the normal create behavior.
+        Perform additional actions on creating a message.
         """
-        conversation = get_object_or_404(Conversation, pk=pk)
-        serializer = self.get_serializer(data=request.data)
+        serializer.save()
 
-        if serializer.is_valid():
-            serializer.save(sender=request.user, conversation=conversation)  # Ensure the conversation is associated
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class ConversationFilter(filters.FilterSet):
+    """
+    FilterSet for filtering Conversations.
+    """
+    participants = filters.CharFilter(field_name="participants__username", lookup_expr="icontains")
 
+    class Meta:
+        model = Conversation
+        fields = ['participants']
+
+
+class MessageFilter(filters.FilterSet):
+    """
+    FilterSet for filtering Messages.
+    """
+    conversation = filters.NumberFilter(field_name="conversation__id")
+    sender = filters.CharFilter(field_name="sender__username", lookup_expr="icontains")
+    
+
+    class Meta:
+        model = Message
+        fields = ['conversation', 'sender']
