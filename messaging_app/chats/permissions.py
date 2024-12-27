@@ -1,27 +1,23 @@
-from rest_framework.permissions import BasePermission
+from rest_framework.permissions import BasePermission, SAFE_METHODS
 from .models import Conversation, Message
 
-
-class IsParticipantOrReadOnly(BasePermission):
+class IsParticipantOfConversation(BasePermission):
     """
-    Custom permission to allow access to Conversations only if the user is a participant.
+    Custom permission to allow only participants in a conversation
+    to send, view, update, and delete messages or conversations.
     """
-
     def has_object_permission(self, request, view, obj):
-        # Check if the user is part of the conversation participants.
+        # Allow read-only access for safe methods if the user is authenticated.
+        if request.method in SAFE_METHODS and request.user.is_authenticated:
+            return True
+
+        # For Conversations, check if the user is a participant.
         if isinstance(obj, Conversation):
             return request.user in obj.participants.all()
-        return False
 
-
-class IsSenderOrParticipant(BasePermission):
-    """
-    Custom permission to allow access to Messages only if the user is the sender or
-    a participant in the conversation.
-    """
-
-    def has_object_permission(self, request, view, obj):
-        # Check if the object is a Message.
+        # For Messages, check if the user is the sender or part of the conversation.
         if isinstance(obj, Message):
-            return request.user == obj.sender or request.user in obj.conversation.participants.all()
+            return (request.user == obj.sender or 
+                    request.user in obj.conversation.participants.all())
+
         return False
