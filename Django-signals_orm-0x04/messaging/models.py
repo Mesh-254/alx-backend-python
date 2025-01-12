@@ -21,6 +21,11 @@ class Message(models.Model):
         auto_now_add=True, help_text="Timestamp when the message was created."
     )
 
+    edited = models.BooleanField(
+        default=False, help_text="Indicates if the message has been edited."
+    )
+
+
     def __str__(self):
         return f'{self.sender.username} -> {self.receiver.username}: {self.content[:20]}'
 
@@ -49,3 +54,25 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"Notification for {self.user.username}: {self.notification_text}"
+
+
+class MessageHistory(models.Model):
+    """
+    Model to log the edit history of a message.
+    """
+    message = models.ForeignKey(
+        Message, on_delete=models.CASCADE, related_name='history',
+        help_text="The original message associated with this history record."
+    )
+    old_content = models.TextField(
+        help_text="The content of the message before it was edited."
+    )
+    edited_at = models.DateTimeField(
+        auto_now_add=True, help_text="Timestamp when the message was edited."
+    )
+    edited_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True,
+                                  help_text="User who edited the message."
+    )
+
+    def __str__(self):
+        return f'History of Message ID {self.message.id} at {self.edited_at}'
