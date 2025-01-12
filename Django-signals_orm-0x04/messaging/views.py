@@ -1,8 +1,9 @@
 from .models import MessageHistory, Message
 from django.db.models import Prefetch
 from django.http import HttpResponse
+from django.views.decorators.cache import cache_page
 
-
+@cache_page(60 * 15)
 def message_history(message_id):
     """
     Display the message edit history in the user interface, 
@@ -23,7 +24,7 @@ def delete_user_account(request):
     user.delete()  # This will trigger the post_delete signal
     return HttpResponse("Your account has been deleted successfully.")
 
-
+@cache_page(60)
 def threaded_conversation(request):
     """
     Function to display a threaded conversations for a given user.
