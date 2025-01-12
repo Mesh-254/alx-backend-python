@@ -14,14 +14,9 @@ def message_notification(sender, instance, created, **kwargs):
     if created:
         Notification.objects.create(
             user=instance.receiver,  # Notify the receiving user
-            message=instance,
+            message=instance,  # Pass the entire Message instance
             notification_text=f"New message from {instance.sender.username}",
         )
-
-
-@receiver(post_save, sender=Notification)
-def save_notification(sender, instance, **kwargs):
-    instance.save()
 
 
 @receiver(pre_save, sender=Message)
@@ -31,18 +26,17 @@ def log_message_edit(sender, instance, **kwargs):
     """
     if instance.pk:  # Ensure this is an update, not a new creation
         # Retrieve the current message content from the database
-        old_message = Message.objects.get(pk=instance.pk)
-        if old_message.content != instance.content:
-            # if original message is is different from new message 
+        original_message = Message.objects.get(pk=instance.pk)
+        if original_message.content != instance.content:
+            # if original message is is different from new message
             # Log the old content in MessageHistory
             MessageHistory.objects.create(
-                message=old_message,
-                old_content= old_message.content,
+                message=original_message,
+                old_content=original_message.content,
             )
-            # Update the edited flag in the original message
+            # Update the edited flag in the instance being saved
             instance.edited = True
-            # Save the original message to MessageHistory
-            old_message.save()
+
 
 def message_history(message_id):
     """
@@ -52,5 +46,5 @@ def message_history(message_id):
     """
     # Get the message history for a message
     message_history = MessageHistory.objects.filter(pk=message_id
-    ).order_by('timestamp').all()
+                                                    ).order_by('timestamp').all()
     return message_history
