@@ -8,10 +8,10 @@ class UnreadMessagesManager(models.Manager):
      custom manager that filters unread messages for a specific user.
     """
 
-    def get_unread_messages(self, user):
+    def unread_for_user(self, user):
         """
         Returns a queryset of unread messages for the given user.
         """
-        return self.filter(receiver=user, read=False).only('id', 'sender', 'content', 'created_at')
+        return self.filter(receiver=user, read=False)
 
 

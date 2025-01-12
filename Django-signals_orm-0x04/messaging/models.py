@@ -42,7 +42,7 @@ class Message(models.Model):
         return f'{self.sender.username} -> {self.receiver.username}: {self.content[:20]}'
 
     objects = models.Manager()  # Default manager
-    unread_messages = UnreadMessagesManager()  # Custom manager
+    unread = UnreadMessagesManager()  # Custom manager
 
 
 class Notification(models.Model):

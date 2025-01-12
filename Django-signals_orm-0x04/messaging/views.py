@@ -34,7 +34,7 @@ def threaded_conversation(request):
                                                     'replies',
                                                     queryset=Message.objects.select_related(
                                                         'sender', 'receiver'),
-                                                    to_attr='replies_cache' # Store pre-fetched replies here
+                                                    to_attr='replies_cache'  # Store pre-fetched replies here
                                                 )
     ).select_related('sender', 'receiver')
 
@@ -48,9 +48,11 @@ def threaded_conversation(request):
             'replies': [build_thread(reply) for reply in getattr(message, 'replies_cache', [])]
         }
     # Build the entire threaded structure
-    threaded_conversation = [build_thread(message) for message in top_level_messages]
+    threaded_conversation = [build_thread(
+        message) for message in top_level_messages]
 
     return threaded_conversation
+
 
 def unread_inbox_view(request):
     """
@@ -59,8 +61,6 @@ def unread_inbox_view(request):
     """
 
     user = request.user
-    unreadmessages = Message.unread_messages.get_unread_messages(user)
+    unreadmessages = Message.unread.unread_for_user(user).only('id', 'sender', 'content', 'created_at')
 
     return unreadmessages
-
-    
