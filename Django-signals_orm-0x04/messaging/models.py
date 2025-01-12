@@ -43,7 +43,7 @@ class Notification(models.Model):
     is_read = models.BooleanField(
         default=False, help_text="Whether the notification has been read by the user."
     )
-    created_at = models.DateTimeField(
+    timestamp = models.DateTimeField(
         auto_now_add=True, help_text="Timestamp when the notification was created."
     )
 
