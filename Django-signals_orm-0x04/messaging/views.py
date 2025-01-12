@@ -1,5 +1,5 @@
-from .models import MessageHistory
-
+from .models import MessageHistory, Message
+from django.db.models import Prefetch
 from django.http import HttpResponse
 
 
@@ -15,12 +15,39 @@ def message_history(message_id):
     return message_history
 
 
-
 def delete_user_account(request):
     """
     Function to delete a user account and all associated data.
     """
     user = request.user
-    user.delete() # This will trigger the post_delete signal
+    user.delete()  # This will trigger the post_delete signal
     return HttpResponse("Your account has been deleted successfully.")
 
+
+def threaded_conversation(request):
+    """
+    Function to display a threaded conversations for a given user.
+    """
+    # Query all top-level messages for the user
+    top_level_messages = Message.objects.filter(sender=request.user, parent_message_isnull=True
+                                                ).prefetch_related(Prefetch(
+                                                    'replies',
+                                                    queryset=Message.objects.select_related(
+                                                        'sender', 'receiver'),
+                                                    to_attr='replies_cache' # Store pre-fetched replies here
+                                                )
+    ).select_related('sender', 'receiver')
+
+    def build_thread(message):
+        """
+        Function to build a threaded conversation.
+        recursively
+        """
+        return {
+            'message': message,
+            'replies': [build_thread(reply) for reply in getattr(message, 'replies_cache', [])]
+        }
+    # Build the entire threaded structure
+    threaded_conversation = [build_thread(message) for message in top_level_messages]
+
+    return threaded_conversation

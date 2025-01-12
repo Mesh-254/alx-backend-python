@@ -13,11 +13,17 @@ def message_notification(sender, instance, created, **kwargs):
     whenever a new message is created.
     """
     if created:
-        Notification.objects.create(
+        notification = Notification.objects.create(
             user=instance.receiver,  # Notify the receiving user
             message=instance,  # Pass the entire Message instance
             notification_text=f"New message from {instance.sender.username}",
         )
+
+        if instance.receiver.is_active:
+            # If the receiver is active, send an email notification
+            notification.is_read = True
+            notification.save()
+            
 
 
 @receiver(pre_save, sender=Message)

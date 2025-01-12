@@ -25,6 +25,12 @@ class Message(models.Model):
         default=False, help_text="Indicates if the message has been edited."
     )
 
+    parent_message = models.ForeignKey(
+        'self', null=True, blank=True, on_delete=models.CASCADE,
+        help_text="Reference to the parent message, if this is a reply.",  
+        related_name='replies',  # Custom reverse name
+    )
+
 
     def __str__(self):
         return f'{self.sender.username} -> {self.receiver.username}: {self.content[:20]}'
