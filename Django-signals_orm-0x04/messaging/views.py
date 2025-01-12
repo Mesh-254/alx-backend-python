@@ -1,8 +1,19 @@
-from .models import Message, Notification, MessageHistory
-from django.contrib.auth.models import User
-from django.db.models.signals import post_delete
-from django.dispatch import receiver
+from .models import MessageHistory
+
 from django.http import HttpResponse
+
+
+def message_history(message_id):
+    """
+    Display the message edit history in the user interface, 
+    allowing users to view previous versions of their messages.
+
+    """
+    # Get the message history for a message
+    message_history = MessageHistory.objects.filter(pk=message_id
+                                                    ).order_by('timestamp').all()
+    return message_history
+
 
 
 def delete_user_account(request):
@@ -13,23 +24,3 @@ def delete_user_account(request):
     user.delete() # This will trigger the post_delete signal
     return HttpResponse("Your account has been deleted successfully.")
 
-
-
-@receiver(post_delete, sender=User)
-def delete_user_messages(sender, instance, **kwargs):
-    """
-    Signal to delete all messages, notifications, and message histories
-    associated with a user when the user is deleted.
-    """
-    # Delete all messages sent by the user
-    Message.objects.filter(sender=instance).delete()
-
-    # Delete all messages received by the user (if the user is the receiver)
-    Message.objects.filter(receiver=instance).delete()
-
-    # Delete notifications for the user
-    Notification.objects.filter(user=instance).delete()
-
-    # Delete message histories where the user is the editor or the original message sender
-    MessageHistory.objects.filter(edited_by=instance).delete()
-    MessageHistory.objects.filter(message__sender=instance).delete()

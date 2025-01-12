@@ -1,8 +1,9 @@
 # se Django signals (e.g., post_save) to trigger a notification when a new Message instance is created.
 
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from .models import Message, Notification, MessageHistory
+from django.contrib.auth.models import User
 
 
 @receiver(post_save, sender=Message)
@@ -38,13 +39,21 @@ def log_message_edit(sender, instance, **kwargs):
             instance.edited = True
 
 
-def message_history(message_id):
+@receiver(post_delete, sender=User)
+def delete_user_messages(sender, instance, **kwargs):
     """
-    Display the message edit history in the user interface, 
-    allowing users to view previous versions of their messages.
+    Signal to delete all messages, notifications, and message histories
+    associated with a user when the user is deleted.
+    """
+    # Delete all messages sent by the user
+    Message.objects.filter(sender=instance).delete()
 
-    """
-    # Get the message history for a message
-    message_history = MessageHistory.objects.filter(pk=message_id
-                                                    ).order_by('timestamp').all()
-    return message_history
+    # Delete all messages received by the user (if the user is the receiver)
+    Message.objects.filter(receiver=instance).delete()
+
+    # Delete notifications for the user
+    Notification.objects.filter(user=instance).delete()
+
+    # Delete message histories where the user is the editor or the original message sender
+    MessageHistory.objects.filter(edited_by=instance).delete()
+    MessageHistory.objects.filter(message__sender=instance).delete()
