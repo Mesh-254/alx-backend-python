@@ -51,3 +51,16 @@ def threaded_conversation(request):
     threaded_conversation = [build_thread(message) for message in top_level_messages]
 
     return threaded_conversation
+
+def unread_inbox_view(request):
+    """
+     display only unread messages in a user’s inbox.
+
+    """
+
+    user = request.user
+    unreadmessages = Message.unread_messages.get_unread_messages(user)
+
+    return unreadmessages
+
+    
