@@ -9,11 +9,11 @@ router.register(r'messages', views.MessageViewSet, basename='messages')
 router.register(r'conversations', views.ConversationViewSet, basename='conversations')
 
 # Create a nested router to handle messages related to a specific conversation.
-nested_router = nested_routers.NestedDefaultRouter(router, r'conversations', lookup='conversation')
-nested_router.register(r'messages', views.MessageViewSet, basename='conversation-messages')
+# nested_router = nested_routers.NestedDefaultRouter(router, r'conversations', lookup='conversation')
+# nested_router.register(r'messages', views.MessageViewSet, basename='conversation-messages')
 
 # The API URLs are now determined automatically by the router, including nested routes.
 urlpatterns = [
     path('', include(router.urls)),          # Include main router
-    path('', include(nested_router.urls)),   # Include nested router for messages in conversations
+    # path('', include(nested_router.urls)),   # Include nested router for messages in conversations
 ]
