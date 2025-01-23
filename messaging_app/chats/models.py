@@ -1,8 +1,9 @@
 from django.db import models
 import uuid
+from django.contrib.auth.models import AbstractUser
 
 
-class User(models.Model):
+class User(AbstractUser):
     ROLE_CHOICES = [
         ('guest', 'Guest'),
         ('host', 'Host'),
@@ -10,20 +11,25 @@ class User(models.Model):
     ]
 
     user_id = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, editable=False)
-    first_name = models.CharField(max_length=255, null=False)
-    last_name = models.CharField(max_length=255, null=False)
+        primary_key=True, default=uuid.uuid4, editable=False, unique=True)
+    first_name = models.CharField(max_length=50, null=False)
+    last_name = models.CharField(max_length=50, null=False)
     email = models.EmailField(unique=True, null=False)
-    password_hash = models.CharField(max_length=255, null=False)
     phone_number = models.CharField(max_length=15, null=True, blank=True)
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES, null=False)
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, null=False, default='guest')
     created_at = models.DateTimeField(auto_now_add=True)
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name', 'phone_number','role']
 
     class Meta:
         indexes = [
             models.Index(fields=['email']),
             models.Index(fields=['user_id']),
         ]
+    
+    def __str__(self):
+        return f"{self.email} - {self.first_name} {self.last_name} . {self.role}"
 
 
 class Conversation(models.Model):

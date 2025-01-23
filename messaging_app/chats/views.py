@@ -47,7 +47,7 @@ class MessageViewSet(viewsets.ModelViewSet):
     """
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
-    permission_classes = [IsAuthenticated, IsParticipantOfConversation]
+    # permission_classes = [IsAuthenticated, IsParticipantOfConversation]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = MessageFilter
     ordering_fields = ['sent_at']
@@ -56,3 +56,4 @@ class MessageViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         # Ensure users only see messages related to their conversations.
         return Message.objects.filter(conversation__participants=self.request.user)
+        
