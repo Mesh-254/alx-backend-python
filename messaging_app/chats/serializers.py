@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import User, Conversation, Message
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.HyperlinkedModelSerializer):
     # This will calculate the full name dynamically.
     full_name = serializers.SerializerMethodField()
 
@@ -55,13 +55,15 @@ class UserSerializer(serializers.ModelSerializer):
         return instance
 
 
-class ConversationSerializer(serializers.ModelSerializer):
+class ConversationSerializer(serializers.HyperlinkedModelSerializer):
+    messages = serializers.HyperlinkedIdentityField(
+        view_name='messages-detail', many=True, read_only=True)  
     participants = serializers.PrimaryKeyRelatedField(
         many=True, queryset=User.objects.all())
 
     class Meta:
         model = Conversation
-        fields = ['conversation_id', 'participants', 'created_at']
+        fields = ['conversation_id', 'participants', 'created_at', 'messages']
 
     def validate_participants_id(self, value):
         """
@@ -100,10 +102,10 @@ class ConversationSerializer(serializers.ModelSerializer):
         return instance
 
 
-class MessageSerializer(serializers.ModelSerializer):
-    sender = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())  # Ensure this is using the User ID (UUID)
-    recipient = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())  # Corrected field to recipient ID
-    conversation = serializers.PrimaryKeyRelatedField(queryset=Conversation.objects.all())  # Make sure the conversation ID matches UUID
+class MessageSerializer(serializers.HyperlinkedModelSerializer):
+    sender = serializers.HyperlinkedRelatedField(view_name='users-detail', read_only=True)
+    recipient = serializers.HyperlinkedRelatedField(view_name='users-detail', read_only=True)  
+    conversation = serializers.HyperlinkedRelatedField(view_name='conversations-detail', read_only=True)  
     # Preview field changed to CharField.
     message_preview = serializers.CharField(read_only=True)
 
