@@ -1,4 +1,5 @@
-from rest_framework import viewsets
+from rest_framework.response import Response
+from rest_framework import viewsets, status
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import User, Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer, UserSerializer
@@ -6,7 +7,6 @@ from rest_framework.permissions import IsAuthenticated
 from .permissions import IsParticipantOfConversation
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.filters import OrderingFilter
-from chats.models import User
 
 class CustomUserViewSet(viewsets.ModelViewSet):
     """
@@ -14,6 +14,7 @@ class CustomUserViewSet(viewsets.ModelViewSet):
     """
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
 
 class ConversationViewSet(viewsets.ModelViewSet):
     """
@@ -31,11 +32,12 @@ class ConversationViewSet(viewsets.ModelViewSet):
         return Conversation.objects.filter(participants=self.request.user)
 
 # Custom pagination class
+
+
 class MessagePagination(PageNumberPagination):
     page_size = 20
     page_size_query_param = 'page_size'
     max_page_size = 100
-
 
 
 class MessageViewSet(viewsets.ModelViewSet):
@@ -52,3 +54,5 @@ class MessageViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         # Ensure users only see messages related to their conversations.
         return Message.objects.filter(conversation__participants=self.request.user)
+
+    

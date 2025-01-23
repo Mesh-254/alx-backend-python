@@ -58,8 +58,7 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 class ConversationSerializer(serializers.HyperlinkedModelSerializer):
     messages = serializers.HyperlinkedIdentityField(
         view_name='messages-detail', many=True, read_only=True)  
-    participants = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=User.objects.all())
+    participants = serializers.HyperlinkedRelatedField(queryset=User.objects.all(), many=True, view_name='users-detail')
 
     class Meta:
         model = Conversation
