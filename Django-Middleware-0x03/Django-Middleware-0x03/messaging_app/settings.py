@@ -54,6 +54,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'chats.middleware.RequestLoggingMiddleware',
     'chats.middleware.RestrictAccessByTimeMiddleware',
+    'chats.middleware.OffensiveLanguageMiddleware',
+    'chats.middleware.RolepermissionMiddleware',
 ]
 
 ROOT_URLCONF = 'messaging_app.urls'
@@ -112,7 +114,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'UTC' 
 
 USE_I18N = True
 

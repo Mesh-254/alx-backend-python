@@ -34,10 +34,13 @@ class RestrictAccessByTimeMiddleware:
 
     def __call__(self, request):
         current_time = now().time()
-        if current_time < datetime.strptime('08:00:00', '%H:%M:%S').time() or current_time > datetime.strptime('11:00:00', '%H:%M:%S').time():
+        start_time = datetime.strptime('14:00:00', '%H:%M:%S').time()
+        end_time = datetime.strptime('21:00:00', '%H:%M:%S').time()
+        if current_time < start_time or current_time > end_time:
             return HttpResponse(
                 "<div style='text-align: center; font-weight: bold; color: red; font-size: 20px; margin:200px auto;'>"
-                "Sorry, the service is only available from 08:00 to 17:00.</div>",
+                f"Sorry, the service is only available from {
+                    start_time} to {end_time}</div>",
                 status=403,
                 content_type='text/html'
             )
@@ -45,6 +48,66 @@ class RestrictAccessByTimeMiddleware:
         response = self.get_response(request)
 
         return response
-    
 
 
+class OffensiveLanguageMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+
+        messsage_limit = 5
+        time_limit = 5 * 60  # 5 minutes in seconds
+
+        # Get the user's IP address
+        ip_address = request.META.get(
+            'HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR'))
+
+       # session storage to maintain message history per IP
+        if 'message_history' not in request.session:
+            request.session['message_history'] = {}
+
+        message_history = request.session['message_history']
+
+        # Get the current timestamp
+        current_time = now().timestamp()
+
+        # Initialize IP's message history if not present
+        if ip_address not in message_history:
+            message_history[ip_address] = []
+
+        # Check if the user has sent too many messages
+        if request.method == 'POST' and len(message_history[ip_address]) >= messsage_limit:
+            return HttpResponse(
+                "<div style='text-align: center; font-weight: bold; color: red; font-size: 20px; margin:200px auto;'>"
+                "Message limit exceeded. Please wait a few minutes before trying again.</div>",
+                status=429,
+                content_type='text/html'
+            )
+
+        # add new message to the history
+        if request.method == 'POST':
+            message_history[ip_address].append(current_time)
+            request.session['message_history'] = message_history
+
+        # Proceed with the original response
+        response = self.get_response(request)
+
+        return response
+
+class RolepermissionMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        
+        # Check if user is authenticated and their role is either 'admin' or 'moderator'
+        if request.user.is_authenticated and request.user.role == 'admin':
+            return self.get_response(request)
+
+        return HttpResponse(
+            "<div style='text-align: center; font-weight: bold; color: red; font-size: 20px; margin:200px auto;'>"
+            "You don't have permission to access this page.</div>",
+            status=403,
+            content_type='text/html'
+        )
