@@ -58,7 +58,7 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 class ConversationSerializer(serializers.HyperlinkedModelSerializer):
     messages = serializers.HyperlinkedIdentityField(
         view_name='messages-detail', many=True, read_only=True)  
-    participants = serializers.HyperlinkedIdentityField(view_name='users-detail', many=True)
+    participants = serializers.HyperlinkedRelatedField(view_name='users-detail', queryset=User.objects.all(), many=True)
 
     class Meta:
         model = Conversation
@@ -102,9 +102,9 @@ class ConversationSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class MessageSerializer(serializers.HyperlinkedModelSerializer):
-    sender = serializers.HyperlinkedRelatedField(view_name='users-detail', read_only=True)
-    recipient = serializers.HyperlinkedRelatedField(view_name='users-detail', read_only=True)  
-    conversation = serializers.HyperlinkedRelatedField(view_name='conversations-detail', read_only=True)  
+    sender = serializers.HyperlinkedRelatedField(view_name='users-detail', queryset=User.objects.all())
+    recipient = serializers.HyperlinkedRelatedField(view_name='users-detail', queryset=User.objects.all())  
+    conversation =  serializers.PrimaryKeyRelatedField(queryset=Conversation.objects.all())
     # Preview field changed to CharField.
     message_preview = serializers.CharField(read_only=True)
 
