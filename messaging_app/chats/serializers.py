@@ -7,8 +7,8 @@ class UserSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
 
     # Password as a write-only field
-    password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
-
+    password = serializers.CharField(write_only=True, required=True, style={
+                                     'input_type': 'password'})
 
     class Meta:
         model = User
@@ -55,14 +55,13 @@ class UserSerializer(serializers.ModelSerializer):
         return instance
 
 
-
 class ConversationSerializer(serializers.ModelSerializer):
-    participants_id = serializers.PrimaryKeyRelatedField(
+    participants = serializers.PrimaryKeyRelatedField(
         many=True, queryset=User.objects.all())
 
     class Meta:
         model = Conversation
-        fields = ['conversation_id', 'participants_id', 'created_at']
+        fields = ['conversation_id', 'participants', 'created_at']
 
     def validate_participants_id(self, value):
         """
@@ -77,31 +76,41 @@ class ConversationSerializer(serializers.ModelSerializer):
         """
         Create and return a new `Conversation` instance, given the validated data.
         """
-        return Conversation.objects.create(**validated_data)
+        # Remove participants from the data and create the conversation
+        participants_data = validated_data.pop('participants')
+        conversation = Conversation.objects.create(**validated_data)
+
+        # Add participants to the conversation's ManyToMany field
+        conversation.participants.set(participants_data)
+        conversation.save()
+        return conversation
 
     def update(self, instance, validated_data):
         """
         Update and return an existing `Conversation` instance, given the validated data.
         """
-        instance.participants_id = validated_data.get(
-            'participants_id', instance.participants_id)
-        instance.created_at = validated_data.get(
-            'created_at', instance.created_at)
+        participants_data = validated_data.pop('participants', None)
+        instance = super().update(instance, validated_data)
+
+        if participants_data is not None:
+            # Update the participants if provided
+            instance.participants.set(participants_data)
+
         instance.save()
         return instance
 
 
 class MessageSerializer(serializers.ModelSerializer):
-    sender_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
-    conversation = serializers.PrimaryKeyRelatedField(
-        queryset=Conversation.objects.all())
+    sender = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())  # Ensure this is using the User ID (UUID)
+    recipient = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())  # Corrected field to recipient ID
+    conversation = serializers.PrimaryKeyRelatedField(queryset=Conversation.objects.all())  # Make sure the conversation ID matches UUID
     # Preview field changed to CharField.
     message_preview = serializers.CharField(read_only=True)
 
     class Meta:
         model = Message
-        fields = ['message_id', 'sender_id', 'conversation',
-                  'message_body', 'sent_at', 'message_preview']
+        fields = ['message_id', 'sender', 'conversation',
+                  'message_body', 'sent_at', 'recipient', 'message_preview']
 
     def get_message_preview(self, obj):
         """
@@ -122,10 +131,10 @@ class MessageSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
-        """
-        Perform additional validation before saving the message.
-        """
-        if data.get('conversation') and not Conversation.objects.filter(id=data['conversation'].id).exists():
-            raise serializers.ValidationError(
-                "The conversation does not exist.")
+        """Perform additional validation before saving the message."""
+        conversation = data.get('conversation')
+        if conversation:
+            # Make sure you're filtering by `conversation_id`
+            if not Conversation.objects.filter(conversation_id=conversation.conversation_id).exists():
+                raise serializers.ValidationError("The conversation does not exist.")
         return data

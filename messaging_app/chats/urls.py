@@ -7,6 +7,7 @@ from chats import views
 router = routers.DefaultRouter()
 router.register(r'messages', views.MessageViewSet, basename='messages')
 router.register(r'conversations', views.ConversationViewSet, basename='conversations')
+router.register(r'users', views.CustomUserViewSet, basename='users')
 
 # Create a nested router to handle messages related to a specific conversation.
 nested_router = nested_routers.NestedDefaultRouter(router, r'conversations', lookup='conversation')
