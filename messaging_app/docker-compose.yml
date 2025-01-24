@@ -16,7 +16,7 @@ services:
   
   web:
     build: .
-    command: python manage.py runserver
+    command: python3 manage.py runserver
     container_name: web
     ports:
       - "8000:8000"
