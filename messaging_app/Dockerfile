@@ -19,3 +19,4 @@ EXPOSE 8000
 
 # Define the command to run the application when the container starts
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+

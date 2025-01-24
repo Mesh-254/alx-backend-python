@@ -1,0 +1,29 @@
+services:
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - "8000:8000"  # Expose Django port
+    environment:
+      MYSQL_DB: ${MYSQL_DB}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_HOST: ${MYSQL_HOST} # Reference the database service name
+      MYSQL_PORT: ${MYSQL_PORT}
+    depends_on:
+      - db  # Ensure db starts before web
+
+  db:
+    image: mysql:5.7  # Use a specific MySQL version
+    container_name: mysql
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DB}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_HOST: ${MYSQL_HOST} 
+      MYSQL_PORT: ${MYSQL_PORT}
+    volumes:
+      - db_data:/var/lib/mysql  # Persist database data
+
+volumes:
+  db_data:
