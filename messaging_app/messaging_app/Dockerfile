@@ -17,5 +17,8 @@ COPY . .
 # Expose the port the Django app runs on (default 8000)
 EXPOSE 8000
 
+
 # Define the command to run the application when the container starts
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+
+RUN -p 8000:8000 messaging-app
