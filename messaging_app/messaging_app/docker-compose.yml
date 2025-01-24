@@ -3,12 +3,14 @@ services:
     image: mysql:5.7
     container_name: mysql
     restart: always
-    environment:
-      - DB
     ports:
       - "3306:3306"
     env_file:
       - .env
+    environment:
+      MYSQL_DB: ${MYSQL_DB}                # References the MYSQL_DB from .env
+      MYSQL_USER: ${MYSQL_USER}                  # References the MYSQL_USER from .env
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - db_data:/var/lib/mysql
   
@@ -22,6 +24,11 @@ services:
       - .:/app
     env_file:
       - .env
+    
+    environment:
+      MYSQL_DB: ${MYSQL_DB}                # References the MYSQL_DB from .env
+      MYSQL_USER: ${MYSQL_USER}                  # References the MYSQL_USER from .env
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     depends_on:
       - db
 volumes:
