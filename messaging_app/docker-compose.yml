@@ -7,6 +7,12 @@ services:
       - "3306:3306"
     env_file:
       - .env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}     # References the MYSQL_PASSWORD from .env
+      MYSQL_DATABASE: ${MYSQL_DB}                # References the MYSQL_DB from .env
+      MYSQL_USER: ${MYSQL_USER}                  # References the MYSQL_USER from .env
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_HOST: ${MYSQL_HOST}         # References the MYSQL_HOST from .env
     volumes:
       - db_data:/var/lib/mysql
   
@@ -20,6 +26,13 @@ services:
       - .:/app
     env_file:
       - .env
+    
+    environment:
+      DB_HOST: ${MYSQL_HOST}                  # The web service will connect to MySQL using these environment variables
+      DB_PORT: ${MYSQL_PORT}
+      DB_USER: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      DB_NAME: ${MYSQL_DB}
     depends_on:
       - db
 volumes:
