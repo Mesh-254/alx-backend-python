@@ -34,7 +34,7 @@ class RestrictAccessByTimeMiddleware:
 
     def __call__(self, request):
         current_time = now().time()
-        start_time = datetime.strptime('14:00:00', '%H:%M:%S').time()
+        start_time = datetime.strptime('18:00:00', '%H:%M:%S').time()
         end_time = datetime.strptime('21:00:00', '%H:%M:%S').time()
         if current_time < start_time or current_time > end_time:
             return HttpResponse(
@@ -101,13 +101,20 @@ class RolepermissionMiddleware:
 
     def __call__(self, request):
         
-        # Check if user is authenticated and their role is either 'admin' or 'moderator'
-        if request.user.is_authenticated and request.user.role == 'admin':
-            return self.get_response(request)
+        # Check if the user is authenticated
+        if request.user.is_authenticated:
+            # Allow access for admin users
+            if request.user.role == 'admin':
+                return self.get_response(request)
+                
+            # Restrict access for non-admin users
+            else:
+                return HttpResponse(
+                    "<div style='text-align: center; font-weight: bold; color: red; font-size: 20px; margin:200px auto;'>"
+                    "Restricted: You don't have permission to access this page.</div>",
+                    status=403,
+                    content_type='text/html'
+                )
 
-        return HttpResponse(
-            "<div style='text-align: center; font-weight: bold; color: red; font-size: 20px; margin:200px auto;'>"
-            "You don't have permission to access this page.</div>",
-            status=403,
-            content_type='text/html'
-        )
+        # For unauthenticated users, allow request to proceed (if needed)
+        return self.get_response(request)
