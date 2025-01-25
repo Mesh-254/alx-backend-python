@@ -1,19 +1,20 @@
 services:
   db:
-    image: mysql:5.7
+    image: mysql
     container_name: mysql
     restart: always
     ports:
-      - "3306:3306"
+      - "3307:3306"
     env_file:
       - .env
     environment:
-      MYSQL_DB: ${MYSQL_DB}                # References the MYSQL_DB from .env
-      MYSQL_USER: ${MYSQL_USER}                  # References the MYSQL_USER from .env
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DB}
+      MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - db_data:/var/lib/mysql
-  
+
   web:
     build: .
     command: python3 manage.py runserver
@@ -24,12 +25,7 @@ services:
       - .:/app
     env_file:
       - .env
-    
-    environment:
-      MYSQL_DB: ${MYSQL_DB}                # References the MYSQL_DB from .env
-      MYSQL_USER: ${MYSQL_USER}                  # References the MYSQL_USER from .env
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     depends_on:
       - db
 volumes:
-  db_data: 
+  db_data:
