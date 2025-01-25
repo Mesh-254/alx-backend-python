@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# Script: kubctl-0x02.sh
+# Description: Deploys blue and green versions and checks logs for errors.
+
+# Variables
+BLUE_MANIFEST="blue_deployment.yaml"
+GREEN_MANIFEST="green_deployment.yaml"
+BLUE_DEPLOYMENT_NAME="django-messaging-app-blue"
+GREEN_DEPLOYMENT_NAME="django-messaging-app-green"
+NAMESPACE="default" # Change if your resources are in a different namespace
+
+# Functions
+deploy_version() {
+  local manifest=$1
+  local name=$2
+
+  echo "Applying manifest: $manifest"
+  kubectl apply -f "$manifest"
+
+  echo "Waiting for deployment $name to be ready..."
+  kubectl rollout status deployment "$name" -n "$NAMESPACE"
+}
+
+check_logs() {
+  local name=$1
+
+  echo "Checking logs for deployment: $name"
+  local pods
+  pods=$(kubectl get pods -l app=django-messaging-app,version="$name" -n "$NAMESPACE" -o jsonpath='{.items[*].metadata.name}')
+
+  for pod in $pods; do
+    echo "Logs for pod: $pod"
+    kubectl logs "$pod" -n "$NAMESPACE" | grep -i "error" || echo "No errors found in pod $pod"
+  done
+}
+
+# Main Script
+
+echo "Starting Blue-Green Deployment..."
+
+# Deploy Blue version
+deploy_version "$BLUE_MANIFEST" "$BLUE_DEPLOYMENT_NAME"
+check_logs "blue"
+
+# Deploy Green version
+deploy_version "$GREEN_MANIFEST" "$GREEN_DEPLOYMENT_NAME"
+check_logs "green"
+
+echo "Deployment completed successfully!"
