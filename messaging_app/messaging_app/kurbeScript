@@ -1,0 +1,10 @@
+#!/usr/bin/bash
+
+# command to start kubernetes cluster 
+minikube start
+
+# command to verify that cluster is running 
+kubectl cluster-info
+
+# retrieve available pods 
+kubectl get pods
