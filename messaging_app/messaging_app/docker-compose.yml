@@ -8,6 +8,7 @@ services:
     env_file:
       - .env
     environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DB: ${MYSQL_DB}                # References the MYSQL_DB from .env
       MYSQL_USER: ${MYSQL_USER}                  # References the MYSQL_USER from .env
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
