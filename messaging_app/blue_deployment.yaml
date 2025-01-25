@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-messaging-app-blue
+spec:
+  replicas: 1  # Set the number of replicas (pods) you need
+  selector:
+    matchLabels:
+      app: django-messaging-app
+  template:
+    metadata:
+      labels:
+        app: django-messaging-app
+        version: blue
+    spec:
+      containers:
+      - name: web
+        image: gcr.io/k8s-minikube/kicbase:latest # Replace with your actual image
+        ports:
+        - containerPort: 8000
+        env:
+        - name: MYSQL_HOST
+          value: db  # MySQL host service name in Kubernetes (e.g., 'db' could be used)
+        - name: MYSQL_DB
+          value: messaging_app
+        - name: MYSQL_USER
+          value: alx
+        - name: MYSQL_PASSWORD
+          value: password
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
+        - name: MYSQL_PORT
+          value: "3306"
