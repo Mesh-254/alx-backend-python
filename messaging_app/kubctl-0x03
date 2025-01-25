@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# Script: kubctl-0x03.sh
+# Description: Applies an updated deployment, monitors the rolling update, tests for downtime, and verifies pod status.
+
+# Variables
+DEPLOYMENT_FILE="blue_deployment.yaml"
+DEPLOYMENT_NAME="django-messaging-app-blue"
+NAMESPACE="default"  # Set the namespace if not default
+TEST_URL="http://localhost:8000"  # Replace with the actual service URL
+
+# Update deployment file
+echo "Updating docker image version to 2.0 in $DEPLOYMENT_FILE"
+sed -i 's|image: gcr.io/k8s-minikube/kicbase:latest|image: gcr.io/k8s-minikube/kicbase:2.0|' "$DEPLOYMENT_FILE"
+
+# Apply the updated deployment
+echo "Applying the updated deployment file: $DEPLOYMENT_FILE"
+kubectl apply -f "$DEPLOYMENT_FILE"
+
+# Trigger a rolling update and monitor its progress
+echo "Triggering a rolling update and monitoring progress..."
+kubectl rollout status deployment "$DEPLOYMENT_NAME" -n "$NAMESPACE"
+
+# Test for downtime during the rollout
+echo "Testing for downtime by sending requests to $TEST_URL..."
+for i in {1..30}; do
+  curl -s --connect-timeout 1 "$TEST_URL" > /dev/null
+  if [ $? -eq 0 ]; then
+    echo "Request $i: App is responding."
+  else
+    echo "Request $i: App is not responding (potential downtime)."
+  fi
+  sleep 2
+
+done
+
+# Verify the rolling update is complete
+echo "Verifying that the rolling update is complete..."
+kubectl get pods -l app=django-messaging-app -n "$NAMESPACE"
+
+# Completion message
+echo "Rolling update script completed."
