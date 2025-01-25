@@ -1,0 +1,28 @@
+#!/usr/bin/bash
+
+# scale the Deployment to 3 replicas using the kubectl scale command
+echo "Scaling the deployment to 3 replicas..."
+kubectl scale deployments/django-messaging-app --replicas=3
+
+# Check the status of the Deployment using the kubectl get deployments command
+echo "Deployment status:"
+kubectl get deployments
+
+# Check the status of the Pods using the kubectl get pods command
+echo "Pods status:"
+kubectl get pods
+
+# Perform load testing on the Django app using wrk to simulate traffic
+echo "Starting load testing using wrk..."
+# Here, replace <external-ip> with the IP address or use port-forwarding if necessary
+wrk -t4 -c100 -d30s http://127.0.0.1:8080
+
+
+# Monitor resource usage using kubectl top
+echo "Monitoring resource usage..."
+kubectl top pods
+
+echo "Script execution completed."
+
+
+
