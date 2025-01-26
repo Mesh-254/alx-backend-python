@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: web
-        image: gcr.io/k8s-minikube/kicbase:latest # Replace with your actual image
+        image: messaging_app-web:latest # Replace with your actual image
         ports:
         - containerPort: 8000
         env:
